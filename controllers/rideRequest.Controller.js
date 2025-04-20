@@ -107,7 +107,7 @@ exports.getRequest = async (req, res) => {
         const ongoingRequest = await RideRequest.findOne({
             driverId,
             status: { $in: ['confirmed', 'started'] }
-        });
+        }).lean();
 
         if (ongoingRequest) {
         console.log({ongoingRequest})
@@ -116,7 +116,10 @@ exports.getRequest = async (req, res) => {
                 success: true,
                 error: false,
                 message: "Ongoing request found",
-                request: ongoingRequest
+                request: {
+                    ...ongoingRequest,
+                    requestType:'ongoing'
+                }
             });
         }
 
@@ -191,6 +194,13 @@ console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, s
             return res.status(200).json({ success: true, error: false, message: "Ride accepted." });
         }
 
+        if (status === "cancelled") {
+            await RideRequest.findByIdAndUpdate(requestId, { driverId, status, driverLocation });
+
+            io.to(`rider_${riderId}`).emit("rideCancelled", { requestId, driverId });
+            return res.status(200).json({ success: true, error: false, message: "Ride cancelled." });
+        }
+
         if (status === 'started') {
             if (!confirmOtp || request.otp != confirmOtp) {
                 return res.status(401).json({ success: false, error: true, message: "OTP missing or mismatched" });
@@ -217,6 +227,8 @@ console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, s
             io.to(`driver_${driverId}`).emit("rideCompleted", { requestId });
             return res.status(200).json({ success: true, error: false, message: "Ride completed and fare calculated." });
         }
+
+
 
         if (driverLocation) {
             await RideRequest.findByIdAndUpdate(requestId, { driverLocation });
@@ -257,7 +269,6 @@ exports.getRecentHistory = async (req, res) => {
         const requests = await RideRequest.find({driverId: driverId}).sort({ createdAt: -1 });
 
         console.log({requests})
-
         return res.status(200).json({
             success: true,
             error: false,
