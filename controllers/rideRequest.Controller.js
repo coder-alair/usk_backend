@@ -254,9 +254,27 @@ exports.getUpdates = async (req, res) => {
 exports.getRecentHistory = async (req, res) => {
     const { driverId } = req.query
     try {
-        const requests = await RideRequest.find({driverId: driverId}).sort({ createdAt: -1 }).limit(5);
+        const requests = await RideRequest.find({driverId: driverId}).sort({ createdAt: -1 });
 
         console.log({requests})
+
+        return res.status(200).json({
+            success: true,
+            error: false,
+            message: "Recent Ride history retrieved",
+            requests
+        });
+
+    } catch (error) {
+        console.error("Internal server error:", error);
+        return res.status(500).json({ success: false, error: true, message: "Internal Server Error" });
+    }
+};
+
+exports.getRecentHistoryUser = async (req, res) => {
+    const { userId } = req.query
+    try {
+        const requests = await RideRequest.find({userId: userId}).populate('driverId').sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
