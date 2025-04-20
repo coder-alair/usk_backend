@@ -1,7 +1,7 @@
 const RideRequest = require('../models/rideRequest.model');
 const Rider = require('../models/rider.models');
 const Driver = require('../models/driver.model');
-const {io} = require("../index");
+const { io } = require("../index");
 const BASE_FARE = 50; // Base fare
 const DISTANCE_RATE = 10; // Rate per km
 const TIME_RATE = 2; // Rate per minute
@@ -19,11 +19,14 @@ exports.createRequest = async (req, res) => {
         distance,
         estimatedTime,
         rideArea,
-        rideType,
+        rideType="single",
         stops, // Stops array for multi-stop rides
         advanceBookingDetails, // Details for advance booking
     } = req.body;
-    
+
+
+    console.dir(req.body)
+
     try {
         // Validate rider existence
         const rider = await Rider.findById(riderId);
@@ -107,6 +110,8 @@ exports.getRequest = async (req, res) => {
         });
 
         if (ongoingRequest) {
+        console.log({ongoingRequest})
+
             return res.status(200).json({
                 success: true,
                 error: false,
@@ -115,10 +120,12 @@ exports.getRequest = async (req, res) => {
             });
         }
 
-        const pendingRequests = await RideRequest.find({ status: 'pending' });
+        const pendingRequests = await RideRequest.find({ status: 'pending' }).populate('userId');
         const nearbyRequests = pendingRequests.filter((request) =>
             isWithinRadius(driverLat, driverLng, request.pickupLocation, 3)
         );
+
+        console.log({nearbyRequests})
 
         return res.status(200).json({
             success: true,
@@ -135,6 +142,8 @@ exports.getRequest = async (req, res) => {
 // Update ride requests (for drivers and riders)
 exports.updateRequest = async (req, res) => {
     const { requestId, driverId, riderId, status, confirmOtp, driverLocation, stopIndex } = req.body;
+
+console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, stopIndex})
 
     try {
         const request = await RideRequest.findById(requestId);
@@ -234,6 +243,26 @@ exports.getUpdates = async (req, res) => {
             error: false,
             message: "Ride updates retrieved",
             request
+        });
+
+    } catch (error) {
+        console.error("Internal server error:", error);
+        return res.status(500).json({ success: false, error: true, message: "Internal Server Error" });
+    }
+};
+
+exports.getRecentHistory = async (req, res) => {
+    const { driverId } = req.query
+    try {
+        const requests = await RideRequest.find({driverId: driverId}).sort({ createdAt: -1 }).limit(5);
+
+        console.log({requests})
+
+        return res.status(200).json({
+            success: true,
+            error: false,
+            message: "Recent Ride history retrieved",
+            requests
         });
 
     } catch (error) {

@@ -5,13 +5,13 @@ const validateSignUp = [
   check("email").isEmail().withMessage("Invalid email."),
   check("password").isLength({ min: 6 }).withMessage("Password must be at least 6 characters."),
   check("contactNumber").isMobilePhone().withMessage("Invalid contact number."),
-  check("role").isIn(["rider", "driver"]).withMessage("Role must be 'rider' or 'driver'.")
+  check("role").isIn(["rider", "driver", "user", "car-washer"]).withMessage("Role must be 'rider' or 'driver'.")
 ];
 
 const validateLogin = [
   check("email").isEmail().withMessage("Invalid email."),
   check("password").notEmpty().withMessage("Password is required."),
-  check("role").isIn(["rider", "driver"]).withMessage("Role must be 'rider' or 'driver'.")
+  check("role").isIn(["rider", "driver", "user", "car-washer"]).withMessage("Role must be 'rider' or 'driver'.")
 ];
 
 
@@ -22,7 +22,7 @@ const validateUpdateDetails = [
   check("userId").isMongoId().withMessage("Invalid user ID."),
 
   // Validate role
-  check("role").isIn(["rider", "driver"]).withMessage("Role must be 'rider' or 'driver'."),
+  check("role").isIn(["rider", "driver", "user", "car-washer"]).withMessage("Role must be 'rider' or 'driver'."),
 
   // Optional fields for updates
   body("updates.fullName")

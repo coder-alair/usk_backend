@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const rideRequestSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rider' },
   name: { type: String, required: true },
-  driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', default: null },
   rideType: {
     type: String,
     enum: ['single', 'multi-stop', 'advance-booking'],

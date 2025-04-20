@@ -9,5 +9,6 @@ router.post('/createRequest', requestController.createRequest);
 router.put('/updateRequest', requestController.updateRequest);
 router.get('/getRideRequest', requestController.getRequest);
 router.get('/get', requestController.getUpdates);
+router.get('/getHistory', requestController.getRecentHistory);
 
 module.exports = router;

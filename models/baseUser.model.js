@@ -42,7 +42,18 @@ const baseUserSchema = new mongoose.Schema(
     },
     password: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
-    updatedAt: { type: Date, default: Date.now }
+    updatedAt: { type: Date, default: Date.now },
+    address: { type: String },
+    location: {
+      type: {
+        type: String,
+        default: "Point"
+      },
+      coordinates: {
+        type: [Number],
+        default: [0, 0]
+      },
+    },
   },
   { timestamps: true }
 );

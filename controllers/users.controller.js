@@ -7,11 +7,13 @@ const Driver = require("../models/driver.model");
 const { errorHandler } = require("../utils/error"); // Import the error handler
 
 const signUp = async (req, res, next) => {
-  const { role, fullName, email, password, contactNumber, ...otherDetails } = req.body;
+  const { role, fullName, email, password, contactNumber, address, location, ...otherDetails } = req.body;
+  console.dir(req.body)
 
   // Validate inputs
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
+    console.dir({ errors })
     const error = errorHandler(400, "Validation failed");
     error.details = errors.array(); // Attach validation errors to the error object
     return next(error);
@@ -34,6 +36,8 @@ const signUp = async (req, res, next) => {
       email,
       password,
       contactNumber,
+      location,
+      address,
       ...otherDetails
     });
     console.log("User>>>>\n", user);
@@ -57,6 +61,7 @@ const login = async (req, res, next) => {
 
   // Validate inputs
   const errors = validationResult(req);
+  console.dir(errors.errors)
   if (!errors.isEmpty()) {
     const error = errorHandler(400, "Validation failed");
     error.details = errors.array(); // Attach validation errors to the error object
@@ -93,7 +98,8 @@ const login = async (req, res, next) => {
     return res.status(200).json({
       message: "Login successful",
       token,
-      user: { id: user._id, role: user.role, email: user.email, isDocComplete: user.isDocComplete }
+      user: { id: user._id, role: user.role, email: user.email, isDocComplete: user.isDocComplete },
+      userData: user
     });
   } catch (err) {
     const error = errorHandler(500, "Internal server error");
@@ -124,6 +130,7 @@ const getDriverDetails = async (req, res, next) => {
 const updateDetails = async (req, res, next) => {
   const { userId, updates, role } = req.body;
 
+  console.log({ userId, updates, role})
   // Validate inputs
   // const errors = validationResult(req);
   // if (!errors.isEmpty()) {
