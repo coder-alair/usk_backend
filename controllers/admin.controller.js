@@ -2,7 +2,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 const AddUser = require("../models/addNewUser.schema");
-const Register =require("../models/register.schema");
+const Register = require("../models/register.schema");
 const Kyc = require("../models/Kyc");
 
 const JWT_SECRET = process.env.ENCRYPTION_SECRET;
@@ -124,6 +124,7 @@ module.exports = {
             const codes = await AddUser.find({ currentUserId });
             const codeArray = codes.map((code) => code.referralCode);
             const users = await User.find({ referralCode: { $in: codeArray } });
+
             res.status(200).json({ users });
         } catch (error) {
             res.status(500).json({ message: "Server error" });
@@ -137,10 +138,22 @@ module.exports = {
                 return res.status(400).json({ message: "User already exists" });
             }
             const newUser = new AddUser({ email, phone, referralCode, currentUserId });
+            const hashedPassword = await bcrypt.hash("12345678", 10);
+            const payload = {
+                firstName: email.split("@")[0],
+                lastName: email.split("@")[0],
+                phoneNumber: phone,
+                referralCode: referralCode,
+                password: hashedPassword,
+                email: email,
+                // role: "",
+            }
+            const newUser1 = await User.create(payload);
             await newUser.save();
 
             res.status(201).json({ message: "User added successfully", newUser });
         } catch (error) {
+            console.log(error);
             res.status(500).json({ message: "Server error" });
         }
     },
