@@ -19,6 +19,7 @@ exports.createRequest = async (req, res) => {
         distance,
         estimatedTime,
         rideArea,
+        fare,
         rideType="single",
         stops, // Stops array for multi-stop rides
         advanceBookingDetails, // Details for advance booking
@@ -59,7 +60,7 @@ exports.createRequest = async (req, res) => {
             dropoffAddress,
             distance,
             estimatedTime,
-            fare: estimatedFare,
+            fare,
             rideArea,
             rideType,
             advanceBookingDetails, // Details for advance booking

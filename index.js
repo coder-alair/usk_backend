@@ -31,6 +31,7 @@ const userRoutes = require("./routes/user.routes");
 const rideRequestRoutes = require('./routes/rideRequest.routes');
 const templeteRoutes = require('./routes/templetes.routes');
 const adminRoutes = require("./routes/admin.routes");
+const razorpayRoutes = require("./routes/razorpay.routes");
 
 // Middlewares
 app.use(cors());
@@ -45,6 +46,7 @@ router.use('/users', userRoutes);
 router.use('/rideRequest', rideRequestRoutes);
 router.use('/templetes', templeteRoutes);
 router.use('/auth', adminRoutes);
+router.use('/razorpay', razorpayRoutes);
 
 // Initialize router here
 app.use('/api', router);

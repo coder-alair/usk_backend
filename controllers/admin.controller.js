@@ -91,9 +91,20 @@ module.exports = {
     loginAdmin: async (req, res) => {
         const { email, password, role } = req.body;
         try {
-            const user = await User.findOne({ email });
+            if (!role) {
+                return res.status(400).json({ message: `Please enter your role` });
+            }
+
+            const user = await User.findOne({
+                email: email,
+            });
+
             if (!user) {
-                return res.status(400).json({ message: "Invalid email or password" });
+                return res.status(400).json({ message: "Invalid email/phone or password" });
+            }
+
+            if (user.role !== role) {
+                return res.status(400).json({ message: `Your role is not ${role}` });
             }
 
             const isPasswordMatch = await bcrypt.compare(password, user.password);
@@ -101,20 +112,18 @@ module.exports = {
                 return res.status(400).json({ message: "Invalid email or password" });
             }
 
-            // if (user.role !== role) {
-            //   return res.status(400).json({ message: "Invalid role" });
-            // }
-
             const token = jwt.sign({ userId: user._id, role: user.role }, JWT_SECRET, {
                 expiresIn: "1d",
             });
-            res.status(200).json({
+
+            return res.status(200).json({
                 token,
                 role: user.role,
                 user,
                 message: "Login successful",
             });
         } catch (error) {
+            console.log(error)
             res.status(500).json({ message: "Server error" });
         }
     },
@@ -131,7 +140,7 @@ module.exports = {
         }
     },
     addUser: async (req, res) => {
-        const { email, phone, referralCode, currentUserId } = req.body;
+        const { email, phone, userType, category, subCategory, referralCode, currentUserId } = req.body;
         try {
             const existingUser = await AddUser.findOne({ email });
             if (existingUser) {
@@ -141,12 +150,14 @@ module.exports = {
             const hashedPassword = await bcrypt.hash("12345678", 10);
             const payload = {
                 firstName: email.split("@")[0],
-                lastName: email.split("@")[0],
+                lastName: "",
                 phoneNumber: phone,
                 referralCode: referralCode,
                 password: hashedPassword,
                 email: email,
-                // role: "",
+                role: userType,
+                category,
+                subCategory
             }
             const newUser1 = await User.create(payload);
             await newUser.save();
