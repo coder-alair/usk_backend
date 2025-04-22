@@ -2,6 +2,7 @@ const RideRequest = require('../models/rideRequest.model');
 const Rider = require('../models/rider.models');
 const Driver = require('../models/driver.model');
 const { io } = require("../index");
+const { generateOtpByLength } = require('../utils/helper');
 const BASE_FARE = 50; // Base fare
 const DISTANCE_RATE = 10; // Rate per km
 const TIME_RATE = 2; // Rate per minute
@@ -20,7 +21,7 @@ exports.createRequest = async (req, res) => {
         estimatedTime,
         rideArea,
         fare,
-        rideType="single",
+        rideType = "single",
         stops, // Stops array for multi-stop rides
         advanceBookingDetails, // Details for advance booking
     } = req.body;
@@ -50,6 +51,8 @@ exports.createRequest = async (req, res) => {
             return res.status(400).json({ success: false, message: "Calculated fare is invalid." });
         }
         console.log(">>>>>>>>>>>>>>>>>.", rideType)
+        const otp = generateOtpByLength(4)
+
         // Build ride request object
         const rideRequestData = {
             userId: riderId,
@@ -63,6 +66,7 @@ exports.createRequest = async (req, res) => {
             fare,
             rideArea,
             rideType,
+            otp,
             advanceBookingDetails, // Details for advance booking
         };
 
@@ -74,12 +78,13 @@ exports.createRequest = async (req, res) => {
             rideRequestData.advanceBookingDetails = advanceBookingDetails;
         }
 
+
         // Create ride request
         const request = await RideRequest.create(rideRequestData);
 
         // Emit ride request to drivers in the relevant area
         const room = rideArea || "defaultRoom";
-        io.to(room).emit("newRideRequest", request);
+        // io.to(room).emit("newRideRequest", request);
 
         return res.status(200).json({
             success: true,
@@ -111,7 +116,7 @@ exports.getRequest = async (req, res) => {
         }).lean();
 
         if (ongoingRequest) {
-        console.log({ongoingRequest})
+            console.log({ ongoingRequest })
 
             return res.status(200).json({
                 success: true,
@@ -119,17 +124,18 @@ exports.getRequest = async (req, res) => {
                 message: "Ongoing request found",
                 request: {
                     ...ongoingRequest,
-                    requestType:'ongoing'
+                    requestType: 'ongoing'
                 }
             });
         }
 
         const pendingRequests = await RideRequest.find({ status: 'pending' }).populate('userId');
+        console.log({pendingRequests})
         const nearbyRequests = pendingRequests.filter((request) =>
-            isWithinRadius(driverLat, driverLng, request.pickupLocation, 3)
+            isWithinRadius(driverLat, driverLng, request.pickupLocation, 10)
         );
 
-        console.log({nearbyRequests})
+        console.log({ nearbyRequests })
 
         return res.status(200).json({
             success: true,
@@ -145,9 +151,9 @@ exports.getRequest = async (req, res) => {
 
 // Update ride requests (for drivers and riders)
 exports.updateRequest = async (req, res) => {
-    const { requestId, driverId, riderId, status, confirmOtp, driverLocation, stopIndex } = req.body;
+    const { requestId, driverId, riderId, status, otp, driverLocation, stopIndex } = req.body;
 
-console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, stopIndex})
+    console.log({ requestId, driverId, riderId, status, otp, driverLocation, stopIndex })
 
     try {
         const request = await RideRequest.findById(requestId);
@@ -182,33 +188,32 @@ console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, s
             request.stops[stopIndex].completed = true; // Mark the stop as completed
             await request.save();
 
-            io.to(`rider_${riderId}`).emit("stopCompleted", { requestId, stopIndex });
+            // io.to(`rider_${riderId}`).emit("stopCompleted", { requestId, stopIndex });
             return res.status(200).json({ success: true, error: false, message: "Stop completed." });
         }
 
         // Handle ride statuses
         if (status === "confirmed") {
-            const otp = generateOTP();
             await RideRequest.findByIdAndUpdate(requestId, { driverId, status, otp, driverLocation });
 
-            io.to(`rider_${riderId}`).emit("rideConfirmed", { requestId, driverId });
+            // io.to(`rider_${riderId}`).emit("rideConfirmed", { requestId, driverId });
             return res.status(200).json({ success: true, error: false, message: "Ride accepted." });
         }
 
         if (status === "cancelled") {
             await RideRequest.findByIdAndUpdate(requestId, { driverId, status, driverLocation });
 
-            io.to(`rider_${riderId}`).emit("rideCancelled", { requestId, driverId });
+            // io.to(`rider_${riderId}`).emit("rideCancelled", { requestId, driverId });
             return res.status(200).json({ success: true, error: false, message: "Ride cancelled." });
         }
 
         if (status === 'started') {
-            if (!confirmOtp || request.otp != confirmOtp) {
+            if (!otp || request.otp != otp) {
                 return res.status(401).json({ success: false, error: true, message: "OTP missing or mismatched" });
             }
             await RideRequest.findByIdAndUpdate(requestId, { status, driverLocation });
 
-            io.to(`rider_${riderId}`).emit("rideStarted", { requestId });
+            // io.to(`rider_${riderId}`).emit("rideStarted", { requestId });
             return res.status(200).json({ success: true, error: false, message: "Ride started." });
         }
 
@@ -224,8 +229,8 @@ console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, s
             );
             await RideRequest.findByIdAndUpdate(requestId, { status, fare, endTime: new Date() });
 
-            io.to(`rider_${riderId}`).emit("rideCompleted", { requestId });
-            io.to(`driver_${driverId}`).emit("rideCompleted", { requestId });
+            // io.to(`rider_${riderId}`).emit("rideCompleted", { requestId });
+            // io.to(`driver_${driverId}`).emit("rideCompleted", { requestId });
             return res.status(200).json({ success: true, error: false, message: "Ride completed and fare calculated." });
         }
 
@@ -233,7 +238,7 @@ console.log({requestId, driverId, riderId, status, confirmOtp, driverLocation, s
 
         if (driverLocation) {
             await RideRequest.findByIdAndUpdate(requestId, { driverLocation });
-            io.to(`rider_${riderId}`).emit("driverLocation", { driverId, driverLocation });
+            // io.to(`rider_${riderId}`).emit("driverLocation", { driverId, driverLocation });
             return res.status(200).json({ success: true, message: "Location updated." });
         }
     } catch (error) {
@@ -267,9 +272,9 @@ exports.getUpdates = async (req, res) => {
 exports.getRecentHistory = async (req, res) => {
     const { driverId } = req.query
     try {
-        const requests = await RideRequest.find({driverId: driverId}).sort({ createdAt: -1 });
+        const requests = await RideRequest.find({ driverId: driverId }).sort({ createdAt: -1 });
 
-        console.log({requests})
+        console.log({ requests })
         return res.status(200).json({
             success: true,
             error: false,
@@ -286,7 +291,7 @@ exports.getRecentHistory = async (req, res) => {
 exports.getRecentHistoryUser = async (req, res) => {
     const { userId } = req.query
     try {
-        const requests = await RideRequest.find({userId: userId}).populate('driverId').sort({ createdAt: -1 });
+        const requests = await RideRequest.find({ userId: userId }).populate('driverId').sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,

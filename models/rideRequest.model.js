@@ -48,9 +48,7 @@ const rideRequestSchema = new mongoose.Schema({
   fare: { type: Number, required: true },
   otp: {
     type: Number,
-    required: function () {
-      return this.status === 'started';
-    }, // OTP required only when status is 'started'
+    default: null,// OTP required only when status is 'started'
   },
   distance: {
     type: Number,
@@ -86,12 +84,6 @@ rideRequestSchema.pre('save', function (next) {
   // Handle advance booking status transition
   if (this.rideType === 'advance-booking' && this.status === 'pending' && this.advanceBookingDetails?.scheduledPickupTime) {
     this.status = 'scheduled';
-  }
-
-  // Set startTime when OTP is provided
-  if (this.otp && this.status === 'pending') {
-    this.status = 'started';
-    this.startTime = new Date();
   }
 
   // Set endTime only when status is changed to 'completed'

@@ -1,13 +1,13 @@
+require('./config/database').dbConnection();
+require('dotenv').config();
 const express = require("express");
-const mongoose = require("mongoose");
-const dotenv = require("dotenv");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
 const socketIo = require("socket.io");
 const morgan = require("morgan");
-
-dotenv.config();
+const I18n = require('./i18n/i18n');
+const router = require("./routes/index");
 
 // Initializing app
 const app = express();
@@ -18,51 +18,6 @@ const io = socketIo(server, {
   }
 });
 
-
-
-// Export io for use in other files
-module.exports = { io };
-
-// Router instance
-const router = express.Router(); 
-
-// Importing routes
-const userRoutes = require("./routes/user.routes");
-const rideRequestRoutes = require('./routes/rideRequest.routes');
-const templeteRoutes = require('./routes/templetes.routes');
-const adminRoutes = require("./routes/admin.routes");
-const razorpayRoutes = require("./routes/razorpay.routes");
-
-// Middlewares
-app.use(cors());
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
-app.use(cookieParser());
-app.use(morgan('dev'));
-
-
-// Routes
-router.use('/users', userRoutes);
-router.use('/rideRequest', rideRequestRoutes);
-router.use('/templetes', templeteRoutes);
-router.use('/auth', adminRoutes);
-router.use('/razorpay', razorpayRoutes);
-
-// Initialize router here
-app.use('/api', router);
-
-// Database connection
-mongoose
-  .connect(process.env.MONGODB_URI)
-  .then(() => console.log("Connected to DB"))
-  .catch((err) => console.error("DB Connection Error:", err));
-
-
-
-const driverSockets = {}; // Store driver connections { driverId: socket.id }
-const riderSockets = {};  // Store rider connections { riderId: socket.id }
-
-// Socket.IO connection handling
 io.on("connection", (socket) => {
   console.log(`Client connected: ${socket.id}`);
 
@@ -77,7 +32,7 @@ io.on("connection", (socket) => {
   socket.on("locationUpdate", ({ userId, role, location }) => {
     const room = role === "driver" ? `rider_${userId}` : `driver_${userId}`;
     io.to(room).emit("locationUpdate", { userId, location });
-    
+
     console.log(`Location update from ${role}:`, location);
   });
 
@@ -85,6 +40,22 @@ io.on("connection", (socket) => {
     console.log(`Client disconnected: ${socket.id}`);
   });
 });
+
+module.exports = { io };
+// Export io for use in other files
+
+// Middlewares
+app.use(cors());
+app.use(express.json({ limit: "50mb" }));
+app.use(express.urlencoded({ limit: "50mb", extended: true }));
+app.use(cookieParser());
+app.set('trust proxy', true);
+app.use(I18n);
+app.use(morgan(':method :url :status :res[content-length] - :response-time ms'));
+
+// Initialize router here
+app.use('/', router);
+
 // Error handling middleware
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500;
@@ -96,8 +67,16 @@ app.use((err, req, res, next) => {
   });
 });
 
+// app.use((req, res, next) => {
+//   res.header('Access-Control-Allow-Origin', '*');
+//   res.header('Access-Control-Allow-Headers', '*');
+//   res.header('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
+//   next();
+// });
+
 // Starting server
 const PORT = process.env.PORT || 3001;
 server.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}!`);
 });
+

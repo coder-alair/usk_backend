@@ -4,6 +4,8 @@ const User = require("../models/User");
 const AddUser = require("../models/addNewUser.schema");
 const Register = require("../models/register.schema");
 const Kyc = require("../models/Kyc");
+const { sendCredentialsEmail } = require("../utils/emailService");
+const { generatePassword, makeRandomString, makeRandomDigit } = require("../utils/helper");
 
 const JWT_SECRET = process.env.ENCRYPTION_SECRET;
 
@@ -147,7 +149,8 @@ module.exports = {
                 return res.status(400).json({ message: "User already exists" });
             }
             const newUser = new AddUser({ email, phone, referralCode, currentUserId });
-            const hashedPassword = await bcrypt.hash("12345678", 10);
+            const password = makeRandomString(3) + makeRandomDigit(2) + makeRandomString(3);
+            const hashedPassword = await bcrypt.hash(password, 10);
             const payload = {
                 firstName: email.split("@")[0],
                 lastName: "",
@@ -161,6 +164,13 @@ module.exports = {
             }
             const newUser1 = await User.create(payload);
             await newUser.save();
+            sendCredentialsEmail({
+                toEmail: email,
+                toName: payload?.firstName,
+                email: email,
+                phone: phone,
+                password: password
+            })
 
             res.status(201).json({ message: "User added successfully", newUser });
         } catch (error) {
