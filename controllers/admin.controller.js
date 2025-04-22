@@ -98,7 +98,10 @@ module.exports = {
             }
 
             const user = await User.findOne({
-                email: email,
+                $or: [
+                    { email: email },
+                    { phone: email }
+                ]
             });
 
             if (!user) {
@@ -144,7 +147,11 @@ module.exports = {
     addUser: async (req, res) => {
         const { email, phone, userType, category, subCategory, referralCode, currentUserId } = req.body;
         try {
-            const existingUser = await AddUser.findOne({ email });
+            const existingRole = await AddUser.findOne({ role: userType });
+            if (existingRole) {
+                return res.status(400).json({ message: "Role already occupied" });
+            }
+            const existingUser = await AddUser.findOne({ email, phone: phone });
             if (existingUser) {
                 return res.status(400).json({ message: "User already exists" });
             }
