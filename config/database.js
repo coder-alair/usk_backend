@@ -1,11 +1,8 @@
 'use strict';
 
 const Mongoose = require('mongoose');
-const result = require('dotenv').config();
+require('dotenv').config();
 
-if (result.error) {
-  throw result.error;
-}
 
 module.exports = {
   dbConnection: () => {

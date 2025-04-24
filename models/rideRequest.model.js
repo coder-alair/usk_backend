@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const rideRequestSchema = new mongoose.Schema({
   userId: { type: mongoose.Schema.Types.ObjectId, ref: 'Rider' },
   name: { type: String, required: true },
+  receiver_number: { type: String },
   driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', default: null },
   rideType: {
     type: String,
@@ -13,24 +14,24 @@ const rideRequestSchema = new mongoose.Schema({
     type: {
       latitude: { type: Number, required: true },
       longitude: { type: Number, required: true },
-    }, 
+    },
     required: true,
   },
   pickupAddress: { type: String, required: true },
   stops: {
-    type:[
-    {
-      location: {
-        latitude: { type: Number  },
-        longitude: { type: Number  },
-        address: { type: String },
-        stopTime: { type: Date },
-      }
-    },
-    
-  ],
-  required:function(){ return this.rideType === "multi-stop"}
-},
+    type: [
+      {
+        location: {
+          latitude: { type: Number },
+          longitude: { type: Number },
+          address: { type: String },
+          stopTime: { type: Date },
+        }
+      },
+
+    ],
+    required: function () { return this.rideType === "multi-stop" }
+  },
   dropoffLocation: {
     type: {
       latitude: { type: Number, required: true },

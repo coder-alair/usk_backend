@@ -3,6 +3,7 @@ const Rider = require('../models/rider.models');
 const Driver = require('../models/driver.model');
 const { io } = require("../index");
 const { generateOtpByLength } = require('../utils/helper');
+const User = require('../models/User');
 const BASE_FARE = 50; // Base fare
 const DISTANCE_RATE = 10; // Rate per km
 const TIME_RATE = 2; // Rate per minute
@@ -24,6 +25,7 @@ exports.createRequest = async (req, res) => {
         rideType = "single",
         stops, // Stops array for multi-stop rides
         advanceBookingDetails, // Details for advance booking
+        receiverNumber
     } = req.body;
 
 
@@ -68,6 +70,7 @@ exports.createRequest = async (req, res) => {
             rideType,
             otp,
             advanceBookingDetails, // Details for advance booking
+            receiver_number: receiverNumber
         };
 
         if (rideType === "multi-stop" && stops) {
@@ -130,7 +133,7 @@ exports.getRequest = async (req, res) => {
         }
 
         const pendingRequests = await RideRequest.find({ status: 'pending' }).populate('userId');
-        console.log({pendingRequests})
+        console.log({ pendingRequests })
         const nearbyRequests = pendingRequests.filter((request) =>
             isWithinRadius(driverLat, driverLng, request.pickupLocation, 10)
         );
@@ -291,13 +294,16 @@ exports.getRecentHistory = async (req, res) => {
 exports.getRecentHistoryUser = async (req, res) => {
     const { userId } = req.query
     try {
+        const rider = await Rider.findById(userId);
+        console.log({ rider })
         const requests = await RideRequest.find({ userId: userId }).populate('driverId').sort({ createdAt: -1 });
+        const receiverRequests = await RideRequest.find({ receiver_number: rider?.contactNumber }).populate('driverId').sort({ createdAt: -1 });
 
         return res.status(200).json({
             success: true,
             error: false,
             message: "Recent Ride history retrieved",
-            requests
+            requests: [...requests, ...receiverRequests]
         });
 
     } catch (error) {
