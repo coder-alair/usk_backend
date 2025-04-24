@@ -6,6 +6,7 @@ const Register = require("../models/register.schema");
 const Kyc = require("../models/Kyc");
 const { sendCredentialsEmail } = require("../utils/emailService");
 const { generatePassword, makeRandomString, makeRandomDigit } = require("../utils/helper");
+const Driver = require("../models/driver.model");
 
 const JWT_SECRET = process.env.ENCRYPTION_SECRET;
 
@@ -147,7 +148,7 @@ module.exports = {
     addUser: async (req, res) => {
         const { email, phone, userType, category, subCategory, referralCode, currentUserId } = req.body;
         try {
-            const existingRole = await AddUser.findOne({ role: userType });
+            const existingRole = await User.findOne({ role: userType });
             if (existingRole) {
                 return res.status(400).json({ message: "Role already occupied" });
             }
@@ -223,6 +224,7 @@ module.exports = {
             await user.save();
             res.status(201).json({ message: "User registered successfully" });
         } catch (error) {
+            console.log({ error })
             res
                 .status(400)
                 .json({ message: "Registration failed", error: error.message });
@@ -248,6 +250,23 @@ module.exports = {
             res
                 .status(500)
                 .json({ message: "Error submitting KYC", error: error.message });
+        }
+    },
+    getGpnUsers: async (req, res) => {
+        try {
+            const drivers = await Driver.find().sort({ createdAt: -1 });
+
+            console.log({ drivers })
+            return res.status(200).json({
+                success: true,
+                error: false,
+                message: "drivers retrieved",
+                data: drivers
+            });
+
+        } catch (error) {
+            console.error("Internal server error:", error);
+            return res.status(500).json({ success: false, error: true, message: "Internal Server Error" });
         }
     }
 

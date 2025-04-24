@@ -14,7 +14,7 @@ module.exports = {
                 name: "IDSA",
                 usage: "single_use",
                 fixed_amount: true,
-                payment_amount: fare,
+                payment_amount: fare * 100,
                 description: "Scan to pay to IDSA",
                 notes: {
                     purpose: "Flexible UPI Payment",

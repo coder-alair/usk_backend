@@ -5,6 +5,26 @@ export const NODE_ENVIRONMENT = {
 
 export const NODE_ENV = process.env.NODE_ENV;
 
+const ROLES = [
+    { label: "Country admin", value: "country_admin" },
+    { label: "State admin", value: "state_admin" },
+    { label: "District admin", value: "district_admin" },
+    { label: "District shop admin", value: "district_shop_admin" },
+    { label: "Distributor admin", value: "distributor_admin" },
+    { label: "Block admin", value: "block_admin" },
+    { label: "GPN admin", value: "gpn_admin" },
+    { label: "Vendor", value: "vendor" },
+];
+
+const CATEGORY = [
+    {
+        label: "Driver", value: "driver"
+    },
+    {
+        label: "Electrician", value: "electrician"
+    },
+]
+
 module.exports = {
     RESPONSE_CODE: {
         SUCCESS: 200,
