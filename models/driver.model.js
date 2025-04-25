@@ -7,6 +7,7 @@ const driverSchema = new mongoose.Schema(
   {
     role: { type: String, default: "driver", immutable: true },
     isAvailable: { type: Boolean, default: false },
+    isReferred:{ type: Boolean, default: false },
     rating: { type: Number, default: 0 },
     vehicleDetails: {
       make: { type: String },

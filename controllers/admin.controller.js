@@ -146,11 +146,16 @@ module.exports = {
         }
     },
     addUser: async (req, res) => {
-        const { email, phone, userType, category, subCategory, referralCode, currentUserId } = req.body;
+        const { email, phone, userType,isReferred, category, subCategory, referralCode, currentUserId } = req.body;
         try {
-            const existingRole = await User.findOne({ role: userType });
-            if (existingRole) {
-                return res.status(400).json({ message: "Role already occupied" });
+            
+            const categories = ["driver", "electrician"];
+            if(!categories.includes(userType)){
+                console.log(!category.includes(userType))
+                const existingRole = await User.findOne({ role: userType});
+                if (existingRole) {
+                    return res.status(400).json({ message: "Role already occupied" });
+                }
             }
             const existingUser = await AddUser.findOne({ email, phone: phone });
             if (existingUser) {
@@ -170,8 +175,19 @@ module.exports = {
                 category,
                 subCategory
             }
+
             const newUser1 = await User.create(payload);
             await newUser.save();
+            if (userType == 'driver') {
+                const driver = await Driver.create({
+                    fullName: email.split("@")[0],
+                    email,
+                    password: hashedPassword,
+                    contactNumber: phone,
+                    isReferred
+                });
+                await driver.save();
+            }
             sendCredentialsEmail({
                 toEmail: email,
                 toName: payload?.firstName,
