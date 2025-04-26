@@ -22,7 +22,7 @@ exports.createRequest = async (req, res) => {
         estimatedTime,
         rideArea,
         fare,
-        rideType = "single",
+        rideType = "parcel",
         stops, // Stops array for multi-stop rides
         advanceBookingDetails, // Details for advance booking
         receiverNumber
@@ -275,7 +275,7 @@ exports.getUpdates = async (req, res) => {
 exports.getRecentHistory = async (req, res) => {
     const { driverId } = req.query
     try {
-        const requests = await RideRequest.find({ driverId: driverId }).sort({ createdAt: -1 });
+        const requests = await RideRequest.find({ driverId: driverId }).populate('driverId').sort({ createdAt: -1 });
 
         console.log({ requests })
         return res.status(200).json({
@@ -296,7 +296,11 @@ exports.getRecentHistoryUser = async (req, res) => {
     try {
         const rider = await Rider.findById(userId);
         console.log({ rider })
-        const requests = await RideRequest.find({ userId: userId }).populate('driverId').sort({ createdAt: -1 });
+        let query = {
+            userId: userId
+        }
+
+        const requests = await RideRequest.find(query).populate('driverId').sort({ createdAt: -1 });
         const receiverRequests = await RideRequest.find({ receiver_number: rider?.contactNumber }).populate('driverId').sort({ createdAt: -1 });
 
         return res.status(200).json({
@@ -305,6 +309,7 @@ exports.getRecentHistoryUser = async (req, res) => {
             message: "Recent Ride history retrieved",
             requests: [...requests, ...receiverRequests]
         });
+
 
     } catch (error) {
         console.error("Internal server error:", error);

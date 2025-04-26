@@ -1,3 +1,4 @@
 {
-	"notFound": "Not Found"
+	"notFound": "Not Found",
+	"internalError": "internalError"
 }

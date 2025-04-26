@@ -8,41 +8,12 @@ const socketIo = require("socket.io");
 const morgan = require("morgan");
 const I18n = require('./i18n/i18n');
 const router = require("./routes/index");
+const { initializeSocket } = require('./socket');
 
 // Initializing app
 const app = express();
 const server = http.createServer(app);
-const io = socketIo(server, {
-  cors: {
-    origin: "*" // Update as needed for security
-  }
-});
-
-io.on("connection", (socket) => {
-  console.log(`Client connected: ${socket.id}`);
-
-  // Joining rooms based on role
-  socket.on("joinRoom", ({ userId, role }) => {
-    const room = role === "driver" ? `driver_${userId}` : `rider_${userId}`;
-    socket.join(room);
-    console.log(`${socket.id} joined room: ${room}`);
-  });
-
-  // Receiving and broadcasting location updates
-  socket.on("locationUpdate", ({ userId, role, location }) => {
-    const room = role === "driver" ? `rider_${userId}` : `driver_${userId}`;
-    io.to(room).emit("locationUpdate", { userId, location });
-
-    console.log(`Location update from ${role}:`, location);
-  });
-
-  socket.on("disconnect", () => {
-    console.log(`Client disconnected: ${socket.id}`);
-  });
-});
-
-module.exports = { io };
-// Export io for use in other files
+initializeSocket(server);
 
 // Middlewares
 app.use(cors());

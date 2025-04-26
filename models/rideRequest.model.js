@@ -7,8 +7,8 @@ const rideRequestSchema = new mongoose.Schema({
   driverId: { type: mongoose.Schema.Types.ObjectId, ref: 'Driver', default: null },
   rideType: {
     type: String,
-    enum: ['single', 'multi-stop', 'advance-booking'],
-    default: 'single', // Default to single-stop ride
+    enum: ['parcel', 'cab'],
+    default: 'parcel', // Default to single-stop ride
   },
   pickupLocation: {
     type: {

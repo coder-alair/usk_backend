@@ -54,6 +54,7 @@ const baseUserSchema = new mongoose.Schema(
         default: [0, 0]
       },
     },
+    socket_id: { type: String }
   },
   { timestamps: true }
 );
