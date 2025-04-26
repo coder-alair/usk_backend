@@ -171,7 +171,7 @@ exports.updateRequest = async (req, res) => {
         if (!driver) return res.status(404).json({ success: false, error: true, message: "Driver not found" });
 
         // Handle advance booking: check scheduled pickup time
-        if (request.rideType === 'advance-booking' && status === 'started') {
+        if (request.rideType === 'advance-booking') {
             const now = new Date();
             const scheduledTime = new Date(request.advanceBookingDetails.scheduledPickupTime);
             if (now < scheduledTime) {
@@ -211,9 +211,6 @@ exports.updateRequest = async (req, res) => {
         }
 
         if (status === 'started') {
-            if (!otp || request.otp != otp) {
-                return res.status(401).json({ success: false, error: true, message: "OTP missing or mismatched" });
-            }
             await RideRequest.findByIdAndUpdate(requestId, { status, driverLocation });
 
             // io.to(`rider_${riderId}`).emit("rideStarted", { requestId });
