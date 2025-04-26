@@ -29,8 +29,6 @@ exports.createRequest = async (req, res) => {
     } = req.body;
 
 
-    console.dir(req.body)
-
     try {
         // Validate rider existence
         const rider = await Rider.findById(riderId);
@@ -52,7 +50,6 @@ exports.createRequest = async (req, res) => {
         if (isNaN(estimatedFare) || estimatedFare < 0) {
             return res.status(400).json({ success: false, message: "Calculated fare is invalid." });
         }
-        console.log(">>>>>>>>>>>>>>>>>.", rideType)
         const otp = generateOtpByLength(4)
 
         // Build ride request object
@@ -119,7 +116,6 @@ exports.getRequest = async (req, res) => {
         }).lean();
 
         if (ongoingRequest) {
-            console.log({ ongoingRequest })
 
             return res.status(200).json({
                 success: true,
@@ -133,12 +129,9 @@ exports.getRequest = async (req, res) => {
         }
 
         const pendingRequests = await RideRequest.find({ status: 'pending' }).populate('userId');
-        console.log({ pendingRequests })
         const nearbyRequests = pendingRequests.filter((request) =>
             isWithinRadius(driverLat, driverLng, request.pickupLocation, 10)
         );
-
-        console.log({ nearbyRequests })
 
         return res.status(200).json({
             success: true,
@@ -211,7 +204,7 @@ exports.updateRequest = async (req, res) => {
         }
 
         if (status === 'started') {
-            await RideRequest.findByIdAndUpdate(requestId, { status, driverLocation });
+            await RideRequest.findByIdAndUpdate(requestId, { driverId, status, driverLocation });
 
             // io.to(`rider_${riderId}`).emit("rideStarted", { requestId });
             return res.status(200).json({ success: true, error: false, message: "Ride started." });
@@ -273,8 +266,6 @@ exports.getRecentHistory = async (req, res) => {
     const { driverId } = req.query
     try {
         const requests = await RideRequest.find({ driverId: driverId }).populate('driverId').sort({ createdAt: -1 });
-
-        console.log({ requests })
         return res.status(200).json({
             success: true,
             error: false,
@@ -292,7 +283,6 @@ exports.getRecentHistoryUser = async (req, res) => {
     const { userId } = req.query
     try {
         const rider = await Rider.findById(userId);
-        console.log({ rider })
         let query = {
             userId: userId
         }

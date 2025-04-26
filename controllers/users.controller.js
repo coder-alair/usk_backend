@@ -8,12 +8,10 @@ const { errorHandler } = require("../utils/error"); // Import the error handler
 
 const signUp = async (req, res, next) => {
   const { role, fullName, email, password, contactNumber, address, location, ...otherDetails } = req.body;
-  console.dir(req.body)
 
   // Validate inputs
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    console.dir({ errors })
     const error = errorHandler(400, "Validation failed");
     error.details = errors.array(); // Attach validation errors to the error object
     return next(error);
@@ -40,7 +38,6 @@ const signUp = async (req, res, next) => {
       address,
       ...otherDetails
     });
-    console.log("User>>>>\n", user);
     await user.save();
 
     return res.status(201).json({
@@ -61,7 +58,6 @@ const login = async (req, res, next) => {
 
   // Validate inputs
   const errors = validationResult(req);
-  console.dir(errors.errors)
   if (!errors.isEmpty()) {
     const error = errorHandler(400, "Validation failed");
     error.details = errors.array(); // Attach validation errors to the error object
@@ -71,16 +67,12 @@ const login = async (req, res, next) => {
   try {
     // Find the user by email and role
     const userModel = role === "driver" ? Driver : Rider;
-    console.log("email:", email);
-    console.log("password:", password);
     const user = await userModel.findOne({ email });
     if (!user) {
       const error = errorHandler(404, "User not found.");
       return next(error);
     }
 
-
-    console.log(user, ".....user")
 
     // Compare passwords
     const validPassword = bcryptjs.compareSync(password, user.password);
@@ -117,7 +109,6 @@ const getDriverDetails = async (req, res, next) => {
       const error = errorHandler(404, "Driver not found.");
       return next(error);
     }
-    console.log(driverDetails);
     return res.status(200).json({ success: true, error: false, name: driverDetails.fullName, phone: driverDetails.contactNumber, vehicleNumber: driverDetails.vehicleDetails.numberPlate });
   } catch (err) {
     console.log("error: ", err)
@@ -130,7 +121,6 @@ const getDriverDetails = async (req, res, next) => {
 const updateDetails = async (req, res, next) => {
   const { userId, updates, role } = req.body;
 
-  console.log({ userId, updates, role})
   // Validate inputs
   // const errors = validationResult(req);
   // if (!errors.isEmpty()) {
@@ -155,7 +145,6 @@ const updateDetails = async (req, res, next) => {
       const error = errorHandler(404, "User not found.");
       return next(error);
     }
-    console.log("up", updatedUser);
     return res.status(200).json({
       message: "User details updated successfully",
       user: updatedUser
