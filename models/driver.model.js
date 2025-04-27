@@ -17,10 +17,10 @@ const driverSchema = new mongoose.Schema(
       RC: { type: String },
       numberPlate: {
         type: String,
-        validate: {
-          validator: (v) => !v || numberPlateRegex.test(v), // Allow empty or valid number plates
-          message: (props) => `${props.value} is not a valid number plate!`
-        }
+        // validate: {
+        //   validator: (v) => !v || numberPlateRegex.test(v), // Allow empty or valid number plates
+        //   message: (props) => `${props.value} is not a valid number plate!`
+        // }
       },
       insuranceExpiry: { type: Date },
     },

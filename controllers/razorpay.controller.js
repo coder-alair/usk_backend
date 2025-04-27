@@ -9,6 +9,8 @@ module.exports = {
                 key_secret: process.env.RAZORPAY_KEY_SECRET,
             });
 
+            console.log({instance})
+
             const qr = await instance.qrCode.create({
                 type: "upi_qr",
                 name: "IDSA",
